@@ -475,6 +475,7 @@ function downloadQRImage(format: 'png' | 'svg' | 'jpg') {
 
 //#region /* QR Config Utils - Saving, Loading and Downloading */
 interface QRCodeConfig {
+  '$wdit'?: string
   props: StyledQRCodeProps & {
     name?: string
   }
@@ -491,6 +492,7 @@ interface QRCodeConfig {
 
 function createQrConfig(): QRCodeConfig {
   return {
+    '$wdit': window.location.href,
     props: qrCodeProps.value,
     style: style.value,
     frame: showFrame.value ? frameSettings.value : null
@@ -505,7 +507,7 @@ function downloadQRConfig() {
   const qrCodeConfigUrl = URL.createObjectURL(qrCodeConfigBlob)
   const qrCodeConfigLink = document.createElement('a')
   qrCodeConfigLink.href = qrCodeConfigUrl
-  qrCodeConfigLink.download = 'qr-code-config.json'
+  qrCodeConfigLink.download = 'qr-code-config.json.wdit'
   qrCodeConfigLink.click()
 }
 
@@ -562,21 +564,23 @@ function loadQrConfigFromFile() {
   console.debug('Loading QR code config')
   const qrCodeConfigInput = document.createElement('input')
   qrCodeConfigInput.type = 'file'
-  qrCodeConfigInput.accept = 'application/json'
-  qrCodeConfigInput.onchange = (event: Event) => {
-    const target = event.target as HTMLInputElement
-    if (target.files) {
-      const file = target.files[0]
-      const reader = new FileReader()
-      reader.onload = (event: ProgressEvent<FileReader>) => {
-        const target = event.target as FileReader
-        const result = target.result as string
-        loadQRConfig(result, LOADED_FROM_FILE_PRESET_KEY)
-      }
-      reader.readAsText(file)
-    }
-  }
+  qrCodeConfigInput.accept = '.json,.wdit'
+  qrCodeConfigInput.onchange = loadQrConfigFromFileEvent
   qrCodeConfigInput.click()
+}
+
+function loadQrConfigFromFileEvent(event: Event) {
+  const target = event.target as HTMLInputElement
+  if (target.files) {
+    const file = target.files[0]
+    const reader = new FileReader()
+    reader.onload = (event: ProgressEvent<FileReader>) => {
+      const target = event.target as FileReader
+      const result = target.result as string
+      loadQRConfig(result, LOADED_FROM_FILE_PRESET_KEY)
+    }
+    reader.readAsText(file)
+  }
 }
 
 watch(
@@ -863,6 +867,7 @@ const mainDivPaddingStyle = computed(() => {
 </script>
 
 <template>
+  <input class="weditteu" type="file" style="display: none" @change="loadQrConfigFromFileEvent" />
   <div
     class="flex items-start justify-center gap-4 md:flex-row md:gap-6 lg:gap-12 lg:pb-0"
     :style="mainDivPaddingStyle"
